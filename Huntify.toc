@@ -1,0 +1,9 @@
+## Title: Huntify
+## Interface: 11302
+## Notes: Hunter Cast Bar
+## Author: Butabah@Earthfury <MakGora>
+## Version: 1.0-classic
+## X-License: GPL v2
+
+## SavedVariables: HuntifyDB
+## OptionalDeps: Ace3, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, SharedMedia, LibClassicCasterino, LibClassicDurations
