@@ -296,9 +296,10 @@ end
 function Huntify:UpdateClip()
     local clip = UI.clip
     local speed = GetRangedSpeed()
-    local width = (0.4 / speed) * settings.width
+    local width = (0.9 / speed) * settings.width
+    local left = (0.5 / speed) * settings.width
 
-    clip:SetPoint("LEFT", UI.frame, "LEFT", GetShotMarkerLocation(), 2)
+    clip:SetPoint("LEFT", UI.frame, "LEFT", GetShotMarkerLocation() - left, 2)
     clip:SetWidth(width)
 end
 
@@ -334,18 +335,18 @@ function Huntify:OnEnable()
         frame:EnableMouse(true)
         frame:RegisterForDrag("LeftButton")
 
-        local latency = frame:CreateTexture(nil, "BACKGROUND")
-        latency:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-        latency:SetWidth(2)
-        latency:SetHeight(settings.height)
-        latency:SetVertexColor(0, 1.0, 0, 1.0)
-
         local shotMarker = frame:CreateTexture(nil, "BACKGROUND")
         shotMarker:SetBlendMode("ADD")
         shotMarker:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         shotMarker:SetWidth(2)
         shotMarker:SetHeight(settings.height)
         shotMarker:SetVertexColor(1.0, 1.0, 1.0, 1.0)
+
+        local latency = frame:CreateTexture(nil, "BACKGROUND")
+        latency:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        latency:SetWidth(2)
+        latency:SetHeight(settings.height)
+        latency:SetVertexColor(0, 1.0, 0, 1.0)
 
         local clip = frame:CreateTexture(nil, "BACKGROUND")
         clip:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
