@@ -127,7 +127,7 @@ function Huntify:OnCombatLogEventUnfiltered()
     if not GUIDIsPlayer(srcGUID) then return end
 
     if eventType == EVENT_TYPE_CAST_START then
-        if spellbook[spellName] ~= nil then
+        if state.spell == nil and spellbook[spellName] ~= nil then
             state.spell = spellbook[spellName]
             state.start = GetTime()
             state.pushback = 1.0
