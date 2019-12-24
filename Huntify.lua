@@ -1,15 +1,7 @@
 local Huntify = LibStub("AceAddon-3.0"):NewAddon("Huntify", "AceConsole-3.0", "AceEvent-3.0", "AceConsole-3.0")
 
---[[
-    Modes that will determine the next ability to cast.
-    In clip mode, auto shots are pushed down to cast Aimed Shot.
-    In full mode, auto shots are prioritized.
-]]
-local FULL_MODE, CLIP_MODE = 0, 1
 -- Time in seconds to cast Auto Shot
 local AUTO_SHOT_CAST_TIME = 0.7001
-
-local mode = FULL_MODE
 
 local EVENT_TYPE_CAST_SUCCESS = "SPELL_CAST_SUCCESS"
 local EVENT_TYPE_CAST_START = "SPELL_CAST_START"
@@ -19,14 +11,18 @@ local EVENT_TYPE_INTERRUPTED = "SPELL_INTERRUPTED"
 local PUSHBACK_BASE = 1.0
 local PUSHBACK_INCREMENT = 0.2
 
-local settings = {
-    ["width"] = 195,
-    ["height"] = 13,
-    ["cooldownRGBA"] = {1, 1, 1, 0.7},
-    ["autoShotRGBA"] = {1, 0, 0, 0.7},
-    ["alpha"] = 1.0,
-    ["movingAlpha"] = 0.5,
-};
+local db
+
+local defaults = {
+    profile = {
+        width = 195,
+        height = 13,
+        cooldownRGBA = {1, 1, 1, 0.7},
+        autoShotRGBA = {1, 0, 0, 0.7},
+        alpha = 1.0,
+        movingAlpha = 0.5,
+    },
+}
 
 -- State keeps track of variables important for shot calculation
 local state = {
@@ -81,8 +77,6 @@ local pushbackEvents = {
 	["RANGE_DAMAGE"] = true,
 	["SPELL_DAMAGE"] = true
 };
-
-local frame, text, bar
 
 function Huntify:OnStartAutoRepeatSpell()
     state.shooting = true
@@ -159,14 +153,19 @@ end
 function Huntify:LockBar()
     UI.frame:SetMovable(false)
     UI.frame:EnableMouse(false)
+    db.locked = true
 end
 
 function Huntify:UnlockBar()
     UI.frame:SetMovable(true)
     UI.frame:EnableMouse(true)
+    db.locked = false
 end
 
 function Huntify:OnInitialize()
+    self.db = LibStub("AceDB-3.0"):New("HuntifyDB", defaults, true)
+    db = self.db.profile
+
     self:RegisterChatCommand("hy", "OnChatCommand")
 end
 
@@ -214,7 +213,7 @@ end
 function Huntify:UpdateAlpha()
     local nextAlpha
     if PlayerIsMoving() and (not state.inCombat) then
-        nextAlpha = settings.movingAlpha
+        nextAlpha = db.movingAlpha
     else
         nextAlpha = 1.0
     end
@@ -265,13 +264,13 @@ function Huntify:UpdateSpark()
     if spell == spellbook["Auto Shot"] then
         duration = GetRangedSpeed()
         coef = (duration - state.left) / duration
-        sparkLocation = settings.width * coef
+        sparkLocation = db.width * coef
         UI.frame.Spark:SetPoint("CENTER", UI.frame, "LEFT", sparkLocation, UI.frame.Spark.offsetY or 2);
     else
         local elapsed = GetTime() - state.start
         duration = spell.castTime / (GetRangedHaste() or 1)
         coef = elapsed / duration
-        sparkLocation = settings.width * coef
+        sparkLocation = db.width * coef
         UI.frame.Spark:SetPoint("CENTER", UI.frame, "LEFT", sparkLocation, UI.frame.Spark.offsetY or 2);
     end
 end
@@ -289,7 +288,7 @@ function Huntify:UpdateProgressBar()
         UI.clip:Show()
         UI.latency:Show()
 
-        local color = settings.cooldownRGBA
+        local color = db.cooldownRGBA
         -- UI.frame:SetStatusBarColor(unpack(color))
     else
         local elapsed = GetTime() - state.start
@@ -313,14 +312,14 @@ end
 
 local function GetShotMarkerLocation()
     local speed = GetRangedSpeed()
-    return settings.width * ((speed - AUTO_SHOT_CAST_TIME) / speed)
+    return db.width * ((speed - AUTO_SHOT_CAST_TIME) / speed)
 end
 
 function Huntify:UpdateLatency()
     local latency = UI.latency
     local speed = GetRangedSpeed()
 
-    local right = (0.3 / speed) * settings.width
+    local right = (0.3 / speed) * db.width
 
     latency:SetPoint("RIGHT", UI.frame, "RIGHT", 0, 2)
     latency:SetWidth(right)
@@ -335,8 +334,8 @@ end
 function Huntify:UpdateClip()
     local clip = UI.clip
     local speed = GetRangedSpeed()
-    local width = (0.9 / speed) * settings.width
-    local left = (0.5 / speed) * settings.width
+    local width = (0.9 / speed) * db.width
+    local left = (0.5 / speed) * db.width
 
     clip:SetPoint("LEFT", UI.frame, "LEFT", GetShotMarkerLocation() - left, 2)
     clip:SetWidth(width)
@@ -360,8 +359,6 @@ function Huntify:OnPlayerRegenDisabled()
 end
 
 function Huntify:OnEnable()
-    self:Print("OnEnable()")
-
     if not PlayerIsClass("HUNTER") then return end
 
     self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
@@ -374,33 +371,42 @@ function Huntify:OnEnable()
 
     if not UI.frame then
         local frame = CreateFrame("StatusBar", "HuntifyWeaponSwingTimer", UIParent, "CastingBarFrameTemplate")
-        frame:SetWidth(settings.width)
-        frame:SetHeight(settings.height)
-        frame:SetPoint("CENTER", 0, 0)
+        frame:SetWidth(db.width)
+        frame:SetHeight(db.height)
         frame:SetScript("OnUpdate", OnUpdate)
-        frame:SetScript("OnDragStart", frame.StartMoving)
-        frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-        frame:SetMovable(true)
-        frame:EnableMouse(true)
+        frame:SetScript("OnDragStart", function()
+            frame:StartMoving()
+        end)
+        frame:SetScript("OnDragStop", function()
+            db.x = frame:GetLeft()
+            db.y = frame:GetBottom()
+            frame:StopMovingOrSizing()
+        end)
         frame:RegisterForDrag("LeftButton")
+
+        if db.x ~= nil or db.y ~= nil then
+            frame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", db.x, db.y)
+        else
+            frame:SetPoint("CENTER", 0, 0)
+        end
 
         local shotMarker = frame:CreateTexture(nil, "BACKGROUND")
         shotMarker:SetBlendMode("ADD")
         shotMarker:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         shotMarker:SetWidth(2)
-        shotMarker:SetHeight(settings.height)
+        shotMarker:SetHeight(db.height)
         shotMarker:SetVertexColor(1.0, 1.0, 1.0, 1.0)
 
         local latency = frame:CreateTexture(nil, "BACKGROUND")
         latency:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         latency:SetWidth(2)
-        latency:SetHeight(settings.height)
+        latency:SetHeight(db.height)
         latency:SetVertexColor(0, 1.0, 0, 1.0)
 
         local clip = frame:CreateTexture(nil, "BACKGROUND")
         clip:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         clip:SetWidth(2)
-        clip:SetHeight(settings.height)
+        clip:SetHeight(db.height)
         clip:SetVertexColor(1.0, 0, 0, 1.0)
 
         frame.Flash:SetVertexColor(1, 1, 1, 0.7)
@@ -409,14 +415,20 @@ function Huntify:OnEnable()
         frame.Text:SetPoint("CENTER", frame, "LEFT", 16, 2)
         frame.Flash:Hide()
 
-        frame.Icon:SetHeight(2 * settings.height)
-        frame.Icon:SetWidth(2 * settings.height)
+        frame.Icon:SetHeight(2 * db.height)
+        frame.Icon:SetWidth(2 * db.height)
         frame.Icon:SetTexture("Interface\\Icons\\Temp")
 
         UI.frame = frame
         UI.latency = latency
         UI.shotMarker = shotMarker
         UI.clip = clip
+
+        if db.locked then
+            Huntify:LockBar()
+        else
+            Huntify:UnlockBar()
+        end
     end
 end
 
