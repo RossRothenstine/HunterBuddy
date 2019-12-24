@@ -1,4 +1,4 @@
-local Huntify = LibStub("AceAddon-3.0"):NewAddon("Huntify", "AceConsole-3.0", "AceEvent-3.0")
+local Huntify = LibStub("AceAddon-3.0"):NewAddon("Huntify", "AceConsole-3.0", "AceEvent-3.0", "AceConsole-3.0")
 
 --[[
     Modes that will determine the next ability to cast.
@@ -25,6 +25,7 @@ local settings = {
     ["cooldownRGBA"] = {1, 1, 1, 0.7},
     ["autoShotRGBA"] = {1, 0, 0, 0.7},
     ["alpha"] = 1.0,
+    ["movingAlpha"] = 0.5,
 };
 
 -- State keeps track of variables important for shot calculation
@@ -43,6 +44,8 @@ local state = {
     -- Pushback starts off at 1 second base, decreasing by 0.2s to a minimum of 0.2.
     -- There is no cap to how many times you can be pushed back.
     ["pushback"] = nil,
+    -- Player is in combat or not.
+    ["inCombat"] = nil,
 };
 
 local UI = {
@@ -139,7 +142,32 @@ function Huntify:OnCombatLogEventUnfiltered()
     end
 end
 
+function Huntify:OnChatCommand(input)
+    local arg, next = self:GetArgs(input, 1)
+
+    if arg == "lock" then
+        local locked = self:GetArgs(input, 1, next)
+        if locked == "1" then
+            self:LockBar()
+        else
+            self:UnlockBar()
+        end
+    end
+
+end
+
+function Huntify:LockBar()
+    UI.frame:SetMovable(false)
+    UI.frame:EnableMouse(false)
+end
+
+function Huntify:UnlockBar()
+    UI.frame:SetMovable(true)
+    UI.frame:EnableMouse(true)
+end
+
 function Huntify:OnInitialize()
+    self:RegisterChatCommand("hy", "OnChatCommand")
 end
 
 local function PlayerIsMoving()
@@ -173,6 +201,7 @@ function Huntify:UpdateShotTime()
 end
 
 function Huntify:UpdateUI()
+    Huntify:UpdateAlpha()
     Huntify:UpdateProgressBar()
     Huntify:UpdateLatency()
     Huntify:UpdateClip()
@@ -180,6 +209,16 @@ function Huntify:UpdateUI()
     Huntify:UpdateMarker()
     Huntify:UpdateFlash()
     Huntify:UpdateIcon()
+end
+
+function Huntify:UpdateAlpha()
+    local nextAlpha
+    if PlayerIsMoving() and (not state.inCombat) then
+        nextAlpha = settings.movingAlpha
+    else
+        nextAlpha = 1.0
+    end
+    UI.frame:SetAlpha(nextAlpha)
 end
 
 local function GetRangedSpeed()
@@ -312,11 +351,21 @@ local function PlayerIsClass(cls)
     return class == cls
 end
 
+function Huntify:OnPlayerRegenEnabled()
+    state.inCombat = false
+end
+
+function Huntify:OnPlayerRegenDisabled()
+    state.inCombat = true
+end
+
 function Huntify:OnEnable()
     self:Print("OnEnable()")
 
     if not PlayerIsClass("HUNTER") then return end
 
+    self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
+    self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnPlayerRegenDisabled")
     self:RegisterEvent("START_AUTOREPEAT_SPELL", "OnStartAutoRepeatSpell")
     self:RegisterEvent("STOP_AUTOREPEAT_SPELL", "OnStopAutoRepeatSpell")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", "OnUnitSpellCastSucceeded")
