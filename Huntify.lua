@@ -337,9 +337,14 @@ function Huntify:UpdateClip()
     local clip = UI.clip
     local speed = GetRangedSpeed()
     local width = (0.9 / speed) * db.width
-    local left = (0.5 / speed) * db.width
+    local left = GetShotMarkerLocation() - ((0.5 / speed) * db.width)
 
-    clip:SetPoint("LEFT", UI.frame, "LEFT", GetShotMarkerLocation() - left, 2)
+    if left < 0 then
+        width = width - math.abs(left)
+        left = 0
+    end
+
+    clip:SetPoint("LEFT", UI.frame, "LEFT", left, 2)
     clip:SetWidth(width)
 end
 
