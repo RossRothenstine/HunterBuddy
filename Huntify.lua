@@ -143,8 +143,10 @@ function Huntify:OnChatCommand(input)
         local locked = self:GetArgs(input, 1, next)
         if locked == "1" then
             self:LockBar()
+            self:Print("Bar locked.")
         else
             self:UnlockBar()
+            self:Print("Bar unlocked.")
         end
     end
 
