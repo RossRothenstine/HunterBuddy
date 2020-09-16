@@ -90,9 +90,13 @@ local function SpellIsAutoShot(spellID)
     return spellID == 75
 end
 
+local function SpellIsFeignDeath(spellID)
+    return spellID == 5384
+end
+
 function Huntify:OnUnitSpellCastSucceeded(event, unit, castGUID, spellID)
     if not UnitIsPlayer(unit) then return end
-    if SpellIsAutoShot(spellID) then
+    if SpellIsAutoShot(spellID) or SpellIsFeignDeath(spellID) then
         local duration = UnitRangedDamage("player")
         state.next = GetTime() + duration
     end
@@ -227,9 +231,13 @@ local function GetRangedSpeed()
 end
 
 function Huntify:UpdateFlash()
-    if state.left >= 0.3 then
+    if state.inCombat and not state.shooting then
+        UI.frame.Flash:SetVertexColor(1.0, 0.0, 0.0, 0.7)
+        UI.frame.Flash:Show()
+    elseif state.left >= 0.3 then
         UI.frame.Flash:Hide()
     else
+        UI.frame.Flash:SetVertexColor(1.0, 1.0, 1.0, 1.0)
         UI.frame.Flash:Show()
     end
 end
