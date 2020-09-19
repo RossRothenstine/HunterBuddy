@@ -27,24 +27,27 @@ function HuntifyAuras:OnInitialize()
 end
 
 function HuntifyAuras:OnUpdate()
+    local ab = Huntify:GetModule('ActionBars')
     if db.showTrueshot and PlayerKnowsTrueshot() then
         if PlayerDoesNotHaveTrueshotActive() and PlayerIsAlive() then
-            Huntify:GetModule('ActionBars'):FlashSpell('Trueshot Aura')
+            ab:FlashSpell('Trueshot Aura')
         else
-            Huntify:GetModule('ActionBars'):StopFlashSpell('Trueshot Aura')
+            ab:StopFlashSpell('Trueshot Aura')
         end
     end
     if self:PlayerIsInCombat() then
         if db.showAspects and PlayerHasNoAspectsActive() then
-            Huntify:GetModule('ActionBars'):FlashSpell('Aspect of the Hawk')
+            ab:FlashSpell('Aspect of the Hawk')
         else
-            Huntify:GetModule('ActionBars'):StopFlashSpell('Aspect of the Hawk')
+            ab:StopFlashSpell('Aspect of the Hawk')
         end
         if db.showHuntersMark and TargetDoesNotHaveHuntersMark() then
-            Huntify:GetModule('ActionBars'):FlashSpell('Hunter\'s Mark')
+            ab:FlashSpell('Hunter\'s Mark')
         else
-            Huntify:GetModule('ActionBars'):StopFlashSpell('Hunter\'s Mark')
+            ab:StopFlashSpell('Hunter\'s Mark')
         end
+    else
+        ab:StopFlashSpell('Hunter\'s Mark')
     end
 end
 
