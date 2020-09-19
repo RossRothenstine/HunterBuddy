@@ -5,7 +5,7 @@
 ## Version: 1.0-classic
 ## X-License: GPL v2
 
-## SavedVariables: HuntifyDB
+## SavedVariables: HuntifyDB, HuntifyAuraDB
 ## OptionalDeps: Ace3, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, SharedMedia, LibClassicCasterino, LibClassicDurations
 
 libs\LibStub\LibStub.lua
@@ -31,3 +31,4 @@ libs\LibClassicDurations\LibClassicDurations.xml
 Huntify.lua
 Huntify_ActionBars.lua
 Huntify_Auras.lua
+Huntify_InterfaceOptions.lua

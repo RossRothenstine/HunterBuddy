@@ -26,6 +26,7 @@ local defaults = {
         alpha = 1.0,
         movingAlpha = 0.5,
         mode = FULL_ROTATION,
+        highlightSpells = true,
     },
 }
 
@@ -176,8 +177,6 @@ end
 function Huntify:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("HuntifyDB", defaults, true)
     db = self.db.profile
-
-    self:RegisterChatCommand("hy", "OnChatCommand")
 end
 
 local function PlayerIsMoving()
@@ -389,6 +388,7 @@ function Huntify:OnEnable()
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", "OnUnitSpellCastSucceeded")
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", "OnCombatLogEventUnfiltered")
     self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED", "OnUnitSpellCastFailed")
+    self:SetUpInterfaceOptions()
 
     if not UI.frame then
         local frame = CreateFrame("StatusBar", "HuntifyWeaponSwingTimer", UIParent, "CastingBarFrameTemplate")
@@ -458,6 +458,8 @@ function Huntify:OnDisable()
 end
 
 function Huntify:UpdateFlashingSpells()
+    if not db.highlightSpells then return end
+
     local reasonableAimedDelay = 0.7
     local ab = Huntify:GetModule('ActionBars')
     local canAimed = false
@@ -486,4 +488,56 @@ function Huntify:UpdateFlashingSpells()
             ab:StopFlashSpell('Multi-Shot')
         end
     end
+end
+
+function Huntify:SetUpInterfaceOptions()
+    local opts = {
+        type = 'group',
+        args = {
+            mode = {
+                order = 0,
+                type = "select",
+                name = "Rotation Selection",
+                desc = "Sets your desired rotation type.",
+                values = {FULL_ROTATION = "Full", CLIPPED_ROTATION = "Clipped"},
+                get = function()
+                    return db.mode
+                end,
+                set = function(info, val)
+                    db.mode = val
+                end
+            },
+            highlightSpells = {
+                order = 1,
+                type = "toggle",
+                name = "Highlight Spells",
+                desc = "Highlight the next spell to cast based on your rotation.",
+                get = function()
+                    return db.highlightSpells
+                end,
+                set = function(info, val)
+                    db.highlightSpells = val
+                end
+            },
+            lock = {
+                order = 1,
+                type = "toggle",
+                name = "Lock Frame",
+                desc = "Locks the frame",
+                get = function()
+                    return db.locked
+                end,
+                set = function(info, val)
+                    if val then
+                        Huntify:LockBar()
+                    else
+                        Huntify:UnlockBar()
+                    end
+                end
+            }
+        },
+    }
+
+    LibStub("AceConfig-3.0"):RegisterOptionsTable("HuntifyWST", opts)
+    blizOptionsPanel = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("HuntifyWST", "Weapon Swing Timer", "Huntify")
 end
