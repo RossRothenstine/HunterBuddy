@@ -1,4 +1,5 @@
-local Huntify = LibStub("AceAddon-3.0"):NewAddon("Huntify", "AceConsole-3.0", "AceEvent-3.0", "AceConsole-3.0")
+local _, Huntify = ...
+local Huntify = LibStub("AceAddon-3.0"):NewAddon(Huntify, "Huntify", "AceConsole-3.0", "AceEvent-3.0")
 
 -- Time in seconds to cast Auto Shot
 local AUTO_SHOT_CAST_TIME = 0.7001
@@ -7,6 +8,9 @@ local EVENT_TYPE_CAST_SUCCESS = "SPELL_CAST_SUCCESS"
 local EVENT_TYPE_CAST_START = "SPELL_CAST_START"
 local EVENT_TYPE_CAST_FAILED = "SPELL_CAST_FAILED"
 local EVENT_TYPE_INTERRUPTED = "SPELL_INTERRUPTED"
+
+local FULL_ROTATION = 'FULL_ROTATION'
+local CLIPPED_ROTATION = 'CLIPPED_ROTATION'
 
 local PUSHBACK_BASE = 1.0
 local PUSHBACK_INCREMENT = 0.2
@@ -21,6 +25,7 @@ local defaults = {
         autoShotRGBA = {1, 0, 0, 0.7},
         alpha = 1.0,
         movingAlpha = 0.5,
+        mode = FULL_ROTATION,
     },
 }
 
@@ -182,6 +187,7 @@ end
 function Huntify:OnUpdate()
     Huntify:UpdateShotTime()
     Huntify:UpdateUI()
+    Huntify:UpdateFlashingSpells()
 end
 
 function Huntify:UpdateShotTime()
@@ -449,4 +455,35 @@ end
 
 function Huntify:OnDisable()
     self:Print("OnDisable()")
+end
+
+function Huntify:UpdateFlashingSpells()
+    local reasonableAimedDelay = 0.7
+    local ab = Huntify:GetModule('ActionBars')
+    local canAimed = false
+    local canMulti = false
+
+    if db.mode == FULL_ROTATION then
+        if GetRangedSpeed() - state.left < reasonableAimedDelay or state.left <= 0.3 then
+            canAimed = select(2, GetSpellCooldown('Aimed Shot')) == 0
+        end
+    else
+        canAimed = select(2, GetSpellCooldown('Aimed Shot')) == 0
+    end
+
+    if (state.left > AUTO_SHOT_CAST_TIME and state.left - AUTO_SHOT_CAST_TIME > 0.5) or state.left <= 0.3 then
+        canMulti = select(2, GetSpellCooldown('Multi-Shot')) == 0
+    end
+
+    if canAimed then
+        ab:StopFlashSpell('Multi-Shot')
+        ab:FlashSpell('Aimed Shot')
+    else
+        ab:StopFlashSpell('Aimed Shot')
+        if canMulti then
+            ab:FlashSpell('Multi-Shot')
+        else
+            ab:StopFlashSpell('Multi-Shot')
+        end
+    end
 end

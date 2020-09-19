@@ -29,3 +29,5 @@ libs\LibClassicCasterino\LibClassicCasterino.lua
 libs\LibClassicDurations\LibClassicDurations.xml
 
 Huntify.lua
+Huntify_ActionBars.lua
+Huntify_Auras.lua
