@@ -146,22 +146,6 @@ function Huntify:OnCombatLogEventUnfiltered()
     end
 end
 
-function Huntify:OnChatCommand(input)
-    local arg, next = self:GetArgs(input, 1)
-
-    if arg == "lock" then
-        local locked = self:GetArgs(input, 1, next)
-        if locked == "1" then
-            self:LockBar()
-            self:Print("Bar locked.")
-        else
-            self:UnlockBar()
-            self:Print("Bar unlocked.")
-        end
-    end
-
-end
-
 function Huntify:LockBar()
     UI.frame:SetMovable(false)
     UI.frame:EnableMouse(false)
