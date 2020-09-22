@@ -47,6 +47,7 @@ function HuntifyAuras:OnUpdate()
             ab:StopFlashSpell('Hunter\'s Mark')
         end
     else
+        ab:StopFlashSpell('Aspect of the Hawk')
         ab:StopFlashSpell('Hunter\'s Mark')
     end
 end
