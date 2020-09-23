@@ -1,5 +1,5 @@
 ## Title: HunterBuddy
-## Interface: 11302
+## Interface: 11305
 ## Notes: Hunter Cast Bar
 ## Author: Butabah@Earthfury <MakGora>
 ## Version: 1.0-classic
