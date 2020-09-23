@@ -1,5 +1,5 @@
-local frame = CreateFrame("Frame", "HuntifyInterfaceOptionsParent", UIParent)
-frame.name = "Huntify"
+local frame = CreateFrame("Frame", "HunterBuddyInterfaceOptionsParent", UIParent)
+frame.name = "HunterBuddy"
 InterfaceOptions_AddCategory(frame)
 
 SLASH_HUNTERBUDDY1 = "/hb"

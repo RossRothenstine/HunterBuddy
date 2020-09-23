@@ -1,5 +1,5 @@
-local _, Huntify = ...
-local Huntify = LibStub("AceAddon-3.0"):NewAddon(Huntify, "Huntify", "AceConsole-3.0", "AceEvent-3.0")
+local _, HunterBuddy = ...
+local HunterBuddy = LibStub("AceAddon-3.0"):NewAddon(HunterBuddy, "HunterBuddy", "AceConsole-3.0", "AceEvent-3.0")
 
 -- Time in seconds to cast Auto Shot
 local AUTO_SHOT_CAST_TIME = 0.7001
@@ -84,11 +84,11 @@ local pushbackEvents = {
 	["SPELL_DAMAGE"] = true
 };
 
-function Huntify:OnStartAutoRepeatSpell()
+function HunterBuddy:OnStartAutoRepeatSpell()
     state.shooting = true
 end
 
-function Huntify:OnStopAutoRepeatSpell()
+function HunterBuddy:OnStopAutoRepeatSpell()
     state.shooting = false
 end
 
@@ -100,7 +100,7 @@ local function SpellIsFeignDeath(spellID)
     return spellID == 5384
 end
 
-function Huntify:OnUnitSpellCastSucceeded(event, unit, castGUID, spellID)
+function HunterBuddy:OnUnitSpellCastSucceeded(event, unit, castGUID, spellID)
     if not UnitIsPlayer(unit) then return end
     if SpellIsAutoShot(spellID) or SpellIsFeignDeath(spellID) then
         local duration = UnitRangedDamage("player")
@@ -108,7 +108,7 @@ function Huntify:OnUnitSpellCastSucceeded(event, unit, castGUID, spellID)
     end
 end
 
-function Huntify:OnUnitSpellCastFailed(event, unit, castGUID, spellID)
+function HunterBuddy:OnUnitSpellCastFailed(event, unit, castGUID, spellID)
     if not UnitIsPlayer(unit) then return end
     state.spell = nil
 end
@@ -117,7 +117,7 @@ local function GUIDIsPlayer(guid)
     return UnitGUID("player") == guid
 end
 
-function Huntify:OnCombatLogEventUnfiltered()
+function HunterBuddy:OnCombatLogEventUnfiltered()
     local timestamp, eventType, hideCaster,
     srcGUID, srcName, srcFlags, srcFlags2,
     dstGUID, dstName, dstFlags, dstFlags2,
@@ -146,20 +146,20 @@ function Huntify:OnCombatLogEventUnfiltered()
     end
 end
 
-function Huntify:LockBar()
+function HunterBuddy:LockBar()
     UI.frame:SetMovable(false)
     UI.frame:EnableMouse(false)
     db.locked = true
 end
 
-function Huntify:UnlockBar()
+function HunterBuddy:UnlockBar()
     UI.frame:SetMovable(true)
     UI.frame:EnableMouse(true)
     db.locked = false
 end
 
-function Huntify:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("HuntifyDB", defaults, true)
+function HunterBuddy:OnInitialize()
+    self.db = LibStub("AceDB-3.0"):New("HunterBuddyDB", defaults, true)
     db = self.db.profile
 end
 
@@ -167,13 +167,13 @@ local function PlayerIsMoving()
     return GetUnitSpeed("player") > 0
 end
 
-function Huntify:OnUpdate()
-    Huntify:UpdateShotTime()
-    Huntify:UpdateUI()
-    Huntify:UpdateFlashingSpells()
+function HunterBuddy:OnUpdate()
+    HunterBuddy:UpdateShotTime()
+    HunterBuddy:UpdateUI()
+    HunterBuddy:UpdateFlashingSpells()
 end
 
-function Huntify:UpdateShotTime()
+function HunterBuddy:UpdateShotTime()
     local timeLeft
     if state.next == nil then
         timeLeft = AUTO_SHOT_CAST_TIME
@@ -194,18 +194,18 @@ function Huntify:UpdateShotTime()
     state.left = timeLeft
 end
 
-function Huntify:UpdateUI()
-    Huntify:UpdateAlpha()
-    Huntify:UpdateProgressBar()
-    Huntify:UpdateLatency()
-    Huntify:UpdateClip()
-    Huntify:UpdateSpark()
-    Huntify:UpdateMarker()
-    Huntify:UpdateFlash()
-    Huntify:UpdateIcon()
+function HunterBuddy:UpdateUI()
+    HunterBuddy:UpdateAlpha()
+    HunterBuddy:UpdateProgressBar()
+    HunterBuddy:UpdateLatency()
+    HunterBuddy:UpdateClip()
+    HunterBuddy:UpdateSpark()
+    HunterBuddy:UpdateMarker()
+    HunterBuddy:UpdateFlash()
+    HunterBuddy:UpdateIcon()
 end
 
-function Huntify:UpdateAlpha()
+function HunterBuddy:UpdateAlpha()
     local nextAlpha
     if PlayerIsMoving() and (not state.inCombat) then
         nextAlpha = db.movingAlpha
@@ -219,7 +219,7 @@ local function GetRangedSpeed()
     return UnitRangedDamage("player")
 end
 
-function Huntify:UpdateFlash()
+function HunterBuddy:UpdateFlash()
     if state.inCombat and not state.shooting then
         UI.frame.Flash:SetVertexColor(1.0, 0.0, 0.0, 0.7)
         UI.frame.Flash:Show()
@@ -255,7 +255,7 @@ local function GetRangedHaste()
     return positiveMul
 end
 
-function Huntify:UpdateSpark()
+function HunterBuddy:UpdateSpark()
     local spell = state.spell or spellbook["Auto Shot"]
 
     local duration, coef, sparkLocation
@@ -274,7 +274,7 @@ function Huntify:UpdateSpark()
     end
 end
 
-function Huntify:UpdateProgressBar()
+function HunterBuddy:UpdateProgressBar()
     local spell = state.spell or spellbook["Auto Shot"]
 
     if spell == spellbook["Auto Shot"] then
@@ -304,7 +304,7 @@ function Huntify:UpdateProgressBar()
 
 end
 
-function Huntify:UpdateIcon()
+function HunterBuddy:UpdateIcon()
     local spell = state.spell or spellbook["Auto Shot"]
     UI.frame.Icon:SetTexture(spell.icon)
 end
@@ -314,7 +314,7 @@ local function GetShotMarkerLocation()
     return db.width * ((speed - AUTO_SHOT_CAST_TIME) / speed)
 end
 
-function Huntify:UpdateLatency()
+function HunterBuddy:UpdateLatency()
     local latency = UI.latency
     local speed = GetRangedSpeed()
 
@@ -324,13 +324,13 @@ function Huntify:UpdateLatency()
     latency:SetWidth(right)
 end
 
-function Huntify:UpdateMarker()
+function HunterBuddy:UpdateMarker()
     local shotMarker = UI.shotMarker
 
     shotMarker:SetPoint("CENTER", UI.frame, "LEFT", GetShotMarkerLocation(), 2)
 end
 
-function Huntify:UpdateClip()
+function HunterBuddy:UpdateClip()
     local clip = UI.clip
     local speed = GetRangedSpeed()
     local width = (0.9 / speed) * db.width
@@ -346,7 +346,7 @@ function Huntify:UpdateClip()
 end
 
 function OnUpdate()
-    Huntify:OnUpdate()
+    HunterBuddy:OnUpdate()
 end
 
 local function PlayerIsClass(cls)
@@ -354,15 +354,15 @@ local function PlayerIsClass(cls)
     return class == cls
 end
 
-function Huntify:OnPlayerRegenEnabled()
+function HunterBuddy:OnPlayerRegenEnabled()
     state.inCombat = false
 end
 
-function Huntify:OnPlayerRegenDisabled()
+function HunterBuddy:OnPlayerRegenDisabled()
     state.inCombat = true
 end
 
-function Huntify:OnEnable()
+function HunterBuddy:OnEnable()
     if not PlayerIsClass("HUNTER") then return end
 
     self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
@@ -375,7 +375,7 @@ function Huntify:OnEnable()
     self:SetUpInterfaceOptions()
 
     if not UI.frame then
-        local frame = CreateFrame("StatusBar", "HuntifyWeaponSwingTimer", UIParent, "CastingBarFrameTemplate")
+        local frame = CreateFrame("StatusBar", "HunterBuddyWeaponSwingTimer", UIParent, "CastingBarFrameTemplate")
         frame:SetWidth(db.width)
         frame:SetHeight(db.height)
         frame:SetScript("OnUpdate", OnUpdate)
@@ -430,22 +430,22 @@ function Huntify:OnEnable()
         UI.clip = clip
 
         if db.locked then
-            Huntify:LockBar()
+            HunterBuddy:LockBar()
         else
-            Huntify:UnlockBar()
+            HunterBuddy:UnlockBar()
         end
     end
 end
 
-function Huntify:OnDisable()
+function HunterBuddy:OnDisable()
     self:Print("OnDisable()")
 end
 
-function Huntify:UpdateFlashingSpells()
+function HunterBuddy:UpdateFlashingSpells()
     if not db.highlightSpells then return end
 
     local reasonableAimedDelay = 0.7
-    local ab = Huntify:GetModule('ActionBars')
+    local ab = HunterBuddy:GetModule('ActionBars')
     local canAimed = false
     local canMulti = false
 
@@ -474,7 +474,7 @@ function Huntify:UpdateFlashingSpells()
     end
 end
 
-function Huntify:SetUpInterfaceOptions()
+function HunterBuddy:SetUpInterfaceOptions()
     local opts = {
         type = 'group',
         args = {
@@ -513,15 +513,15 @@ function Huntify:SetUpInterfaceOptions()
                 end,
                 set = function(info, val)
                     if val then
-                        Huntify:LockBar()
+                        HunterBuddy:LockBar()
                     else
-                        Huntify:UnlockBar()
+                        HunterBuddy:UnlockBar()
                     end
                 end
             }
         },
     }
 
-    LibStub("AceConfig-3.0"):RegisterOptionsTable("HuntifyWST", opts)
-    blizOptionsPanel = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("HuntifyWST", "Weapon Swing Timer", "Huntify")
+    LibStub("AceConfig-3.0"):RegisterOptionsTable("HunterBuddyWST", opts)
+    blizOptionsPanel = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("HunterBuddyWST", "Weapon Swing Timer", "HunterBuddy")
 end

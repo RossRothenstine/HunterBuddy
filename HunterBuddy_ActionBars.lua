@@ -1,12 +1,12 @@
-local _, Huntify = ...
-local HuntifyActionBars = Huntify:NewModule('ActionBars', 'AceEvent-3.0', 'AceConsole-3.0')
+local _, HunterBuddy = ...
+local HunterBuddyActionBars = HunterBuddy:NewModule('ActionBars', 'AceEvent-3.0', 'AceConsole-3.0')
 
-function HuntifyActionBars:OnEnable()
+function HunterBuddyActionBars:OnEnable()
     -- self:RegisterEvent('ACTIONBAR_SLOT_CHANGED', 'OnActionBarSlotChanged')
     self:ScanActionBars()
 end
 
-function HuntifyActionBars:ScanActionBars()
+function HunterBuddyActionBars:ScanActionBars()
     self.abilities = {
         ['Aimed Shot'] = {},
         ['Multi-Shot'] = {},
@@ -82,7 +82,7 @@ function BlizzardButtonForSlot(slot)
     return _G[bar .. 'Button' .. i]
 end
 
-function HuntifyActionBars:FlashSpell(spellName)
+function HunterBuddyActionBars:FlashSpell(spellName)
     if self.abilities[spellName] ~= nil then
         for _, btn in pairs(self.abilities[spellName]) do
             ActionButton_ShowOverlayGlow(btn)
@@ -90,7 +90,7 @@ function HuntifyActionBars:FlashSpell(spellName)
     end
 end
 
-function HuntifyActionBars:StopFlashSpell(spellName)
+function HunterBuddyActionBars:StopFlashSpell(spellName)
     if self.abilities[spellName] ~= nil then
         for _, btn in pairs(self.abilities[spellName]) do
             ActionButton_HideOverlayGlow(btn)

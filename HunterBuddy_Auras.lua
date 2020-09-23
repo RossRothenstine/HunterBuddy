@@ -1,6 +1,6 @@
 
-local _, Huntify = ...
-local HuntifyAuras = Huntify:NewModule('Auras', 'AceEvent-3.0', 'AceConsole-3.0')
+local _, HunterBuddy = ...
+local HunterBuddyAuras = HunterBuddy:NewModule('Auras', 'AceEvent-3.0', 'AceConsole-3.0')
 
 local db
 local defaults = {
@@ -11,23 +11,23 @@ local defaults = {
     }
 }
 
-function HuntifyAuras:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("HuntifyAuraDB", defaults, true)
+function HunterBuddyAuras:OnInitialize()
+    self.db = LibStub("AceDB-3.0"):New("HunterBuddyAuraDB", defaults, true)
     db = self.db.profile
 
     self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnPlayerRegenEnabled")
     self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnPlayerRegenDisabled")
 
-    local frame = CreateFrame("Frame", "HuntifyAurasFrame")
+    local frame = CreateFrame("Frame", "HunterBuddyAurasFrame")
     frame:SetScript('OnUpdate', function()
-        HuntifyAuras:OnUpdate()
+        HunterBuddyAuras:OnUpdate()
     end)
 
-    HuntifyAuras:SetUpInterfaceOptions()
+    HunterBuddyAuras:SetUpInterfaceOptions()
 end
 
-function HuntifyAuras:OnUpdate()
-    local ab = Huntify:GetModule('ActionBars')
+function HunterBuddyAuras:OnUpdate()
+    local ab = HunterBuddy:GetModule('ActionBars')
     if db.showTrueshot and PlayerKnowsTrueshot() then
         if PlayerDoesNotHaveTrueshotActive() and PlayerIsAlive() then
             ab:FlashSpell('Trueshot Aura')
@@ -52,15 +52,15 @@ function HuntifyAuras:OnUpdate()
     end
 end
 
-function HuntifyAuras:OnPlayerRegenEnabled()
+function HunterBuddyAuras:OnPlayerRegenEnabled()
     self.playerInCombat = false
 end
 
-function HuntifyAuras:OnPlayerRegenDisabled()
+function HunterBuddyAuras:OnPlayerRegenDisabled()
     self.playerInCombat = true
 end
 
-function HuntifyAuras:PlayerIsInCombat()
+function HunterBuddyAuras:PlayerIsInCombat()
     return self.playerInCombat
 end
 
@@ -109,7 +109,7 @@ function PlayerKnowsTrueshot()
     return IsSpellKnown(19506)
 end
 
-function HuntifyAuras:SetUpInterfaceOptions()
+function HunterBuddyAuras:SetUpInterfaceOptions()
     local opts = {
         type = 'group',
         args = {
@@ -124,7 +124,7 @@ function HuntifyAuras:SetUpInterfaceOptions()
                 set = function(info, val)
                     db.showAspects = val
                     if not val then
-                        Huntify:GetModule('ActionBars'):StopFlashSpell('Aspect of the Hawk')
+                        HunterBuddy:GetModule('ActionBars'):StopFlashSpell('Aspect of the Hawk')
                     end
                 end
             },
@@ -139,7 +139,7 @@ function HuntifyAuras:SetUpInterfaceOptions()
                 set = function(info, val)
                     db.showHuntersMark = val
                     if not val then
-                        Huntify:GetModule('ActionBars'):StopFlashSpell('Hunter\'s Mark')
+                        HunterBuddy:GetModule('ActionBars'):StopFlashSpell('Hunter\'s Mark')
                     end
                 end
             },
@@ -154,13 +154,13 @@ function HuntifyAuras:SetUpInterfaceOptions()
                 set = function(info, val)
                     db.showTrueshot = val
                     if not val then
-                        Huntify:GetModule('ActionBars'):StopFlashSpell('Trueshot Aura')
+                        HunterBuddy:GetModule('ActionBars'):StopFlashSpell('Trueshot Aura')
                     end
                 end
             },
         },
     }
 
-    LibStub("AceConfig-3.0"):RegisterOptionsTable("HuntifyAuras", opts)
-    blizOptionsPanel = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("HuntifyAuras", "Auras", "Huntify")
+    LibStub("AceConfig-3.0"):RegisterOptionsTable("HunterBuddyAuras", opts)
+    blizOptionsPanel = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("HunterBuddyAuras", "Auras", "HunterBuddy")
 end
