@@ -1,0 +1,7 @@
+package-as: HunterBuddy-@project-version@
+
+# ignore:
+
+license-output: LICENSE.md
+
+manual_changelog: CHANGELOG.md
