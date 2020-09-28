@@ -2,7 +2,7 @@
 ## Interface: 11305
 ## Notes: Hunter Cast Bar
 ## Author: Butabah@Earthfury <MakGora>
-## Version: 1.0-classic
+## Version: 1.0.1
 ## X-License: GPL v2
 
 ## SavedVariables: HunterBuddyDB, HunterBuddyAuraDB
