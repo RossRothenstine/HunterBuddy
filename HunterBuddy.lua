@@ -64,7 +64,7 @@ local UI = {
 
 local spellbook = {
     ["Aimed Shot"] = {
-        castTime = 3.0,
+        castTime = 2.5,
         icon = 135130,
     },
     ["Multi-Shot"] = {
@@ -74,6 +74,10 @@ local spellbook = {
     ["Auto Shot"] = {
         castTime = nil,
         icon = 135489,
+    },
+    ["Steady Shot"] = {
+        castTime = 1.5,
+        icon = 132213,
     },
 };
 
@@ -100,9 +104,24 @@ local function SpellIsFeignDeath(spellID)
     return spellID == 5384
 end
 
+local function SpellIsAimedShot(spellID)
+    return spellID == 27065
+        or spellID == 20904
+        or spellID == 20903
+        or spellID == 20902
+        or spellID == 20901
+        or spellID == 20900
+        or spellID == 19434
+end
+
+local function SpellIsSteadyShot(spellID)
+    return spellID == 34120
+end
+
 function HunterBuddy:OnUnitSpellCastSucceeded(event, unit, castGUID, spellID)
     if not UnitIsPlayer(unit) then return end
-    if SpellIsAutoShot(spellID) or SpellIsFeignDeath(spellID) then
+    
+    if SpellIsAutoShot(spellID) or SpellIsFeignDeath(spellID) or SpellIsAimedShot(spellID) then
         local duration = UnitRangedDamage("player")
         state.next = GetTime() + duration
     end
@@ -118,10 +137,12 @@ local function GUIDIsPlayer(guid)
 end
 
 function HunterBuddy:OnCombatLogEventUnfiltered()
-    local timestamp, eventType, hideCaster,
-    srcGUID, srcName, srcFlags, srcFlags2,
-    dstGUID, dstName, dstFlags, dstFlags2,
-    spellID, spellName, arg3, arg4, arg5 = CombatLogGetCurrentEventInfo()
+    local eventType, srcGUID, dstGUID, spellName
+    local values = {CombatLogGetCurrentEventInfo()}
+    eventType = values[2]
+    srcGUID = values[4]
+    dstGUID = values[8]
+    spellName = values[13]
 
     if pushbackEvents[eventType] and GUIDIsPlayer(dstGUID) and state.spell ~= nil then
         -- A very simple way to do pushback is to increment the time the cast started to be later.
@@ -170,7 +191,7 @@ end
 function HunterBuddy:OnUpdate()
     HunterBuddy:UpdateShotTime()
     HunterBuddy:UpdateUI()
-    HunterBuddy:UpdateFlashingSpells()
+    -- HunterBuddy:UpdateFlashingSpells()
 end
 
 function HunterBuddy:UpdateShotTime()
@@ -182,13 +203,19 @@ function HunterBuddy:UpdateShotTime()
     end
 
     if timeLeft < 0 then
-        timeLeft = 0
+        timeLeft = 0.000001
     end
 
     local spell = state.spell or spellbook["Auto Shot"]
-    if (not state.shooting or PlayerIsMoving() or spell ~= spellbook["Auto Shot"]) and timeLeft <= AUTO_SHOT_CAST_TIME then
-        state.next = GetTime() + AUTO_SHOT_CAST_TIME
-        timeLeft = AUTO_SHOT_CAST_TIME
+    if spell ~= spellbook["Steady Shot"] then
+        if spell == spellbook["Aimed Shot"] then
+            -- Don't update state.next during cast.
+            local duration = UnitRangedDamage("player")
+            state.next = GetTime() + duration
+        elseif (not state.shooting or PlayerIsMoving() or spell ~= spellbook["Auto Shot"]) and timeLeft <= AUTO_SHOT_CAST_TIME then
+            state.next = GetTime() + AUTO_SHOT_CAST_TIME
+            timeLeft = AUTO_SHOT_CAST_TIME
+        end
     end
 
     state.left = timeLeft
@@ -197,11 +224,9 @@ end
 function HunterBuddy:UpdateUI()
     HunterBuddy:UpdateAlpha()
     HunterBuddy:UpdateProgressBar()
-    HunterBuddy:UpdateLatency()
-    HunterBuddy:UpdateClip()
     HunterBuddy:UpdateSpark()
     HunterBuddy:UpdateMarker()
-    HunterBuddy:UpdateFlash()
+    -- HunterBuddy:UpdateFlash()
     HunterBuddy:UpdateIcon()
 end
 
@@ -216,7 +241,7 @@ function HunterBuddy:UpdateAlpha()
 end
 
 local function GetRangedSpeed()
-    return UnitRangedDamage("player")
+    return select(1, UnitRangedDamage("player")) 
 end
 
 function HunterBuddy:UpdateFlash()
@@ -232,7 +257,7 @@ function HunterBuddy:UpdateFlash()
 end
 
 local attackTimeDecreases = {
-    [6150] = 1.3,    -- Quick Shots/ Imp Aspect of the Hawk (Aimed)
+    [6150] = 1.15,    -- Quick Shots/ Imp Aspect of the Hawk (Aimed)
     [3045] = 1.4,    -- Rapid Fire (Aimed)
     [28866] = 1.2,   -- Kiss of the Spider (Increases your _attack speed_ by 20% for 15 sec.) -- For Aimed
 }
@@ -243,15 +268,41 @@ local function GetTrollBerserkHaste()
     return speed
 end
 
+local function GetSerpentSwiftness()
+    -- TODO minify
+    local _, _, _, _, ranks, _, _, known = GetTalentInfo(1, 20)
+    if known == 1 then
+        return (1.0 + (ranks * 0.04))
+    end
+    return 1.0
+end
+
+local quivers = {
+    ["Ancient Sinew Wrapped Lamina"] = 1.15,
+}
+
+local function GetQuiverHaste()
+    for i=1,4,1 do
+        if quivers[GetBagName(i)] ~= nil then
+            return quivers[GetBagName(i)]
+        end
+    end
+    return 1.0
+end
+
 local function GetRangedHaste()
     local positiveMul = 1.0
     for i=1, 100 do
         local name, _, _, _, _, _, _, _, _, spellID = UnitAura("player", i, "HELPFUL")
-        if not name then return positiveMul end
+        if not name then break end
         if attackTimeDecreases[spellID] or spellID == 26635 then
             positiveMul = positiveMul * (attackTimeDecreases[spellID] or GetTrollBerserkHaste(unit))
         end
     end
+    
+    positiveMul = positiveMul * GetQuiverHaste()
+    positiveMul = positiveMul * GetSerpentSwiftness()
+
     return positiveMul
 end
 
@@ -262,7 +313,7 @@ function HunterBuddy:UpdateSpark()
 
     if spell == spellbook["Auto Shot"] then
         duration = GetRangedSpeed()
-        coef = (duration - state.left) / duration
+        coef = (duration - state.left) / ((duration ~= 0) and duration or 1)
         sparkLocation = db.width * coef
         UI.frame.Spark:SetPoint("CENTER", UI.frame, "LEFT", sparkLocation, UI.frame.Spark.offsetY or 2);
     else
@@ -284,14 +335,10 @@ function HunterBuddy:UpdateProgressBar()
         UI.frame:SetValue(-state.left)
 
         UI.shotMarker:Show()
-        UI.clip:Show()
         UI.latency:Show()
-
-        local color = db.cooldownRGBA
-        -- UI.frame:SetStatusBarColor(unpack(color))
     else
         local elapsed = GetTime() - state.start
-        local castTime = (spell.castTime / GetRangedHaste())
+        local castTime = (spell.castTime / (GetRangedHaste() or 1))
 
         UI.frame.Text:SetFormattedText("%.1f", castTime - elapsed)
         UI.frame:SetMinMaxValues(0, castTime)
@@ -311,6 +358,7 @@ end
 
 local function GetShotMarkerLocation()
     local speed = GetRangedSpeed()
+    speed = (speed ~= 0) and speed or 1
     return db.width * ((speed - AUTO_SHOT_CAST_TIME) / speed)
 end
 
