@@ -191,7 +191,7 @@ end
 function HunterBuddy:OnUpdate()
     HunterBuddy:UpdateShotTime()
     HunterBuddy:UpdateUI()
-    -- HunterBuddy:UpdateFlashingSpells()
+    HunterBuddy:UpdateFlashingSpells()
 end
 
 function HunterBuddy:UpdateShotTime()
@@ -226,8 +226,10 @@ function HunterBuddy:UpdateUI()
     HunterBuddy:UpdateProgressBar()
     HunterBuddy:UpdateSpark()
     HunterBuddy:UpdateMarker()
-    -- HunterBuddy:UpdateFlash()
+    HunterBuddy:UpdateFlash()
     HunterBuddy:UpdateIcon()
+		HunterBuddy:UpdateLatency()
+		HunterBuddy:UpdateClip()
 end
 
 function HunterBuddy:UpdateAlpha()
@@ -241,7 +243,7 @@ function HunterBuddy:UpdateAlpha()
 end
 
 local function GetRangedSpeed()
-    return select(1, UnitRangedDamage("player")) 
+    return select(1, UnitRangedDamage("player"))
 end
 
 function HunterBuddy:UpdateFlash()
